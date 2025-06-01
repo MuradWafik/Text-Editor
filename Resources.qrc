@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/imgs">
+        <file>whole-word.svg</file>
+        <file>gui-case-sensitive.svg</file>
+    </qresource>
+</RCC>
