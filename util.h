@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UTIL_H
+#define UTIL_H
 
 #include <QString>
 #include <QFont>
@@ -23,3 +24,5 @@ namespace util{
     #endif
     }
 }
+
+#endif // UTIL_H

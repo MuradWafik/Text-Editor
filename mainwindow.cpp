@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->ui->stackedWidget->setCurrentWidget(this->ui->page);
     QDir::setCurrent(QDir::homePath());
 
+    this->setWindowFlags(Qt::WindowStaysOnTopHint);
 
     setUIChanges();
 
@@ -34,10 +35,17 @@ MainWindow::~MainWindow()
         process->waitForFinished();
     }
 
-    deleteAllTabs();
+    // deleteAllTabs();
 
     delete process;
     delete ui;
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+
+    deleteAllTabs();
+    QMainWindow::closeEvent(event);
 }
 
 
@@ -215,7 +223,7 @@ bool MainWindow::openFile(const QString &filePath)
     QFileInfo fileDirectory{filePath};
     currentDirectory.setPath(fileDirectory.path());
 
-    editor* nextPage = new editor(this->ui->openEditorsTabWidget);
+    editor* nextPage = new editor(this->ui->openEditorsTabWidget, this);
     nextPage->setObjectName(filePath);
     openEditor = nextPage;
 
@@ -611,7 +619,8 @@ void MainWindow::deleteAllTabs(){
     while(tabWidget->count() != 0){
         editor* cur = qobject_cast<editor*>(tabWidget->widget(0));
         tabWidget->removeTab(0);
-        cur->deleteLater();
+        // cur->deleteLater();
+        delete cur;
     }
 
     // it should be deleted by now, but setting it to nullptr for any checks that occur elsewhere

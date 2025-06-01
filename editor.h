@@ -12,22 +12,26 @@ class editor : public QWidget
 {
     Q_OBJECT
 public:
-    explicit editor(QTabWidget *parent);
+    explicit editor(QTabWidget *parent, QMainWindow* mainWindow);
     ~editor();
 
     // multiple methods that just call on the same for the main plaintTextEdit
-    inline QString getText() const{
+    inline QString getText() const
+    {
         return textEdit->toPlainText();
     }
 
-    inline void setText(const QString& text){
+    inline void setText(const QString& text)
+    {
         textEdit->setPlainText(text);
     }
     // i guess compiler can access private members on inlined functions
-    inline int blockCount() const{
+    inline int blockCount() const
+    {
         return textEdit->blockCount();
     }
-    inline QPlainTextEdit* getPte() const{
+    inline QPlainTextEdit* getPte() const
+    {
         return textEdit;
     }
 
@@ -39,17 +43,20 @@ public:
     void saveAs();
 
     // true means there are changes not saved in the file (for actions like opening another)
-    inline bool unsavedChanges() const{
+    inline bool unsavedChanges() const
+    {
         return textEdit->document()->isModified();
     }
 
-    inline QString fileName() const{
+    inline QString fileName() const
+    {
         return currentFile;
     }
 
     void openFile(QFile& file);
 
-    inline void showSearchAndReplace(){
+    inline void showSearchAndReplace()
+    {
         this->searchAndReplace->showWidget();
     };
 
@@ -77,9 +84,10 @@ private:
     QHBoxLayout *layout;
 
     QTabWidget* parent;
-    SearchAndReplace* searchAndReplace;
+    QMainWindow* mainWindow; // non-owning pointer, no management
+    std::unique_ptr<SearchAndReplace> searchAndReplace;
 
-    SyntaxHighlighter* syntaxHighlighter;
+    std::unique_ptr<SyntaxHighlighter> syntaxHighlighter;
 
 };
 

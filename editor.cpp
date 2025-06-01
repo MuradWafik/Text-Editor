@@ -8,21 +8,21 @@
 #include <QTextStream>
 #include <QMainWindow>
 
-editor::editor(QTabWidget *parent)
+editor::editor(QTabWidget *parent, QMainWindow* mainWindow)
     : QWidget{parent},
     textEdit(new QPlainTextEdit(this)),
     lineNumberTextEdit(new QPlainTextEdit(this)),
     layout(new QHBoxLayout(this)),
     parent(parent),
-    searchAndReplace(new SearchAndReplace(this->textEdit)),
-    syntaxHighlighter(new SyntaxHighlighter(this->textEdit->document()))
+    mainWindow(mainWindow),
+    searchAndReplace(std::make_unique<SearchAndReplace>(this->textEdit)),
+    syntaxHighlighter(std::make_unique<SyntaxHighlighter>(this->textEdit->document()))
 // reminder** (The order they are initialized here does not matter, what matters is the order they are declared in the header
 {
     font.setFixedPitch(true);
     // storing it into a single widget
     // basically reapplying all the values from the .ui file for the old widgets
     // (translating the markup to code here)
-
     lineNumberTextEdit->setMinimumSize(20, 40);
     lineNumberTextEdit->setMaximumSize(50, 16777215);
     lineNumberTextEdit->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -78,15 +78,15 @@ editor::editor(QTabWidget *parent)
 editor::~editor()
 {
     if(unsavedChanges()){
-        auto saved = QMessageBox::question(qobject_cast<QMainWindow*>(parent),
+        std::string text = "File (" +  this->currentFile.toStdString() +") has some unsaved changes, would you like to save them?";
+        auto saved = QMessageBox::question(mainWindow,
                                            tr("Unsaved Changes"),
-                                           tr("You have some unsaved changes, would you like to save?"),
+                                           tr(text.c_str()),
                                            QMessageBox::Save | QMessageBox::Discard, QMessageBox::Save);
         if(saved == QMessageBox::Save){
             saveFile();
         }
 
-        delete searchAndReplace;
     }
 }
 
@@ -148,7 +148,6 @@ void editor::commentLines()
 {
     /* this is a very uneleagant solution though, it modifies the users current cursor, and
      * if the document was unmodified, it disregards and isModified becomes true (just cause the colors changed)
-     *
      */
     auto textCursor = textEdit->textCursor();
     // how commenting out multiple lines works
@@ -158,7 +157,7 @@ void editor::commentLines()
     // otherwise it goes by each line of the selection
 
     if(textCursor.hasSelection()){
-        const int startIndex = textCursor.selectionStart();
+        // const int startIndex = textCursor.selectionStart();
         QString text = textCursor.selection().toPlainText();
 
         QStringList textSplit = text.split("\n");
@@ -268,9 +267,10 @@ void editor::saveFile()
         QFile file(currentFile);
         if(!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             QString errorMessage{QString("Unable to Save File ") + file.errorString()};
-            QMessageBox::warning(qobject_cast<QMainWindow*>(parent),
+            QMessageBox::warning(mainWindow,
                                  tr("Warning"),
-                                 tr(errorMessage.toStdString().c_str()));
+                                 tr(errorMessage.toStdString().c_str())
+                                 );
             return;
         }
         QString text = getText();
@@ -285,8 +285,10 @@ void editor::saveFile()
 
     }
     catch (const std::exception &e) {
-        QMessageBox::warning(qobject_cast<QMainWindow*>(parent),
-                             tr("Warning"), tr(e.what()));
+        QMessageBox::warning(mainWindow,
+                             tr("Warning"),
+                             tr(e.what())
+                             );
     }
 }
 
@@ -300,7 +302,7 @@ void editor::saveAs()
 
     QFile file(fileName);
     if (!file.open(QFile::WriteOnly | QFile::Text)) {
-        QMessageBox::warning(qobject_cast<QMainWindow*>(parent), tr("Warning"), "Can Not Save File: " + file.errorString());
+        QMessageBox::warning(mainWindow, tr("Warning"), "Can Not Save File: " + file.errorString());
         return;
     }
 
